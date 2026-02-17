@@ -63,7 +63,7 @@ We will build this project step by step:
 
 ### Phase 1: Foundation
 - [x] **Task 1 — Project setup**: FastAPI hello-world in `backend/`, requirements.txt, venv
-- [ ] **Task 2 — Database & config**: Set up PostgreSQL connection, pydantic-settings, .env file
+- [x] **Task 2 — Database & config**: PostgreSQL via Docker, pydantic-settings, async SQLAlchemy engine, .env
 - [ ] **Task 3 — Models**: Create User, Role, Permission, RefreshToken SQLAlchemy models
 - [ ] **Task 4 — Alembic migrations**: Initialize Alembic, generate first migration, seed default roles/permissions
 
@@ -105,9 +105,12 @@ We will build this project step by step:
 py-auth/
   README.md
   prd.md
+  docker-compose.yml           ← PostgreSQL container
   .vscode/settings.json
   backend/
     requirements.txt
+    .env                       ← local secrets (gitignored)
+    .env.example               ← template for other devs
     venv/
     app/
       __init__.py

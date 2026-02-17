@@ -1,6 +1,22 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="py-auth")
+from fastapi import FastAPI
+from sqlalchemy import text
+
+from app.core.database import engine
+
+
+# lifespan = a FasAPI livecycle hook. Code before yield runs in startup - after in shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Verify database connection on startup
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
+    yield
+    await engine.dispose()
+
+
+app = FastAPI(title="py-auth", lifespan=lifespan)
 
 
 @app.get("/health")

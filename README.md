@@ -2,6 +2,22 @@
 
 FastAPI authentication & authorization showcase.
 
+## Database
+
+Start PostgreSQL via Docker:
+
+```bash
+docker compose up -d
+```
+
+Stop it:
+
+```bash
+docker compose down
+```
+
+Connection: `postgresql://pyauth:pyauth@localhost:5432/pyauth`
+
 ## Setup
 
 ```bash
