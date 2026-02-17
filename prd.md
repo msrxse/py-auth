@@ -64,7 +64,7 @@ We will build this project step by step:
 ### Phase 1: Foundation
 - [x] **Task 1 — Project setup**: FastAPI hello-world in `backend/`, requirements.txt, venv
 - [x] **Task 2 — Database & config**: PostgreSQL via Docker, pydantic-settings, async SQLAlchemy engine, .env
-- [ ] **Task 3 — Models**: Create User, Role, Permission, RefreshToken SQLAlchemy models
+- [x] **Task 3 — Models**: User, Role, Permission, RefreshToken, Article + join tables
 - [ ] **Task 4 — Alembic migrations**: Initialize Alembic, generate first migration, seed default roles/permissions
 
 ### Phase 2: Authentication
