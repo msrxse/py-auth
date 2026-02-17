@@ -27,6 +27,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Migrations
+
+```bash
+# Apply all migrations
+alembic upgrade head
+
+# Generate a new migration after changing models
+alembic revision --autogenerate -m "description"
+
+# Seed default roles and permissions
+python -m app.seed
+```
+
 ## Run
 
 ```bash
