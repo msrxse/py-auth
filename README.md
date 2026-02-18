@@ -40,6 +40,8 @@ alembic revision --autogenerate -m "description"
 python -m app.seed
 ```
 
+See [backend/alembic/README.md](backend/alembic/README.md) for the full list of migration commands, verification steps, and seeding details.
+
 ## Run
 
 ```bash
