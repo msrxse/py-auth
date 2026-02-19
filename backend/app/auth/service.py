@@ -8,9 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import RefreshToken, Role, User
-from app.auth.schemas import AuthResponse, LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.auth.schemas import AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserResponse
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, hash_password, verify_password
+from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
 
 
 async def register_user(data: RegisterRequest, session: AsyncSession) -> AuthResponse:
@@ -126,3 +126,51 @@ async def login_user(data: LoginRequest, session: AsyncSession) -> AuthResponse:
     )
 
     return AuthResponse(user=user_resp, tokens=token_resp)
+
+
+async def refresh_user_tokens(data: RefreshRequest, session: AsyncSession) -> TokenResponse:
+    """Rotate refresh token and issue new access token."""
+
+    # Decode the refresh token JWT
+    try:
+        payload = decode_token(data.refresh_token)
+        user_id = int(payload["sub"])
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token.",
+        )
+
+    # Look up the token in DB
+    result = await session.execute(
+        select(RefreshToken).where(RefreshToken.token == data.refresh_token)
+    )
+    db_token = result.scalar_one_or_none()
+
+    if not db_token or db_token.revoked:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is revoked or not found.",
+        )
+
+    # Revoke the old refresh token
+    db_token.revoked = True
+
+    # Issue new tokens
+    new_access_token = create_access_token(user_id)
+    new_refresh_token_str = create_refresh_token(user_id)
+
+    # Store new refresh token in DB
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    session.add(RefreshToken(
+        token=new_refresh_token_str,
+        user_id=user_id,
+        expires_at=expires_at,
+    ))
+
+    await session.commit()
+
+    return TokenResponse(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token_str,
+    )

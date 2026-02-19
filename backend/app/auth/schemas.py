@@ -16,6 +16,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -25,6 +29,10 @@ class UserResponse(BaseModel):
     roles: list[str]
 
     model_config = {"from_attributes": True}
+
+
+class UserMeResponse(UserResponse):
+    permissions: list[str]
 
 
 class TokenResponse(BaseModel):

@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from app.auth.router import router as auth_router
 from app.core.database import engine
+from app.users.router import router as users_router
 
 
 # lifespan = a FasAPI livecycle hook. Code before yield runs in startup - after in shutdown
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="py-auth", lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.get("/health")

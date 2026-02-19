@@ -6,18 +6,18 @@ Build a FastAPI project from scratch that demonstrates **authentication** (who a
 
 ## Decisions Made
 
-| Decision | Choice | Why |
-|---|---|---|
-| Auth approach | From scratch | Educational — understand every layer |
-| Database | PostgreSQL | Production-grade |
-| ORM | SQLAlchemy async | Modern FastAPI pattern |
-| Migrations | Alembic | Industry standard |
-| Auth model | RBAC + granular permissions | Roles hold permissions; code checks permissions, not roles |
-| JWT library | PyJWT | Maintained (python-jose is abandoned) |
-| Password hashing | pwdlib[argon2] | Maintained (passlib is deprecated), Argon2id is best |
-| Token strategy | Access token (short) + Refresh token (long) | Security best practice |
-| Permission storage | Database (not in JWT) | Permissions can change without reissuing tokens |
-| Frontend permissions | Returned in `/users/me` response | Frontend uses for UI rendering; backend always re-validates |
+| Decision             | Choice                                      | Why                                                         |
+| -------------------- | ------------------------------------------- | ----------------------------------------------------------- |
+| Auth approach        | From scratch                                | Educational — understand every layer                        |
+| Database             | PostgreSQL                                  | Production-grade                                            |
+| ORM                  | SQLAlchemy async                            | Modern FastAPI pattern                                      |
+| Migrations           | Alembic                                     | Industry standard                                           |
+| Auth model           | RBAC + granular permissions                 | Roles hold permissions; code checks permissions, not roles  |
+| JWT library          | PyJWT                                       | Maintained (python-jose is abandoned)                       |
+| Password hashing     | pwdlib[argon2]                              | Maintained (passlib is deprecated), Argon2id is best        |
+| Token strategy       | Access token (short) + Refresh token (long) | Security best practice                                      |
+| Permission storage   | Database (not in JWT)                       | Permissions can change without reissuing tokens             |
+| Frontend permissions | Returned in `/users/me` response            | Frontend uses for UI rendering; backend always re-validates |
 
 ## Authorization Architecture
 
@@ -30,6 +30,7 @@ Flow:
 ```
 
 **Why not put permissions in the JWT?**
+
 - Permissions can be revoked instantly (no waiting for token expiry)
 - No token bloat (users with many permissions)
 - Database is always the source of truth
@@ -49,11 +50,11 @@ Users ──many-to-many──► Roles ──many-to-many──► Permissions
 
 ## Default Roles
 
-| Role | Permissions |
-|---|---|
-| viewer | `read_article`, `read_user` |
+| Role   | Permissions                                 |
+| ------ | ------------------------------------------- |
+| viewer | `read_article`, `read_user`                 |
 | editor | viewer + `create_article`, `update_article` |
-| admin | all permissions |
+| admin  | all permissions                             |
 
 ---
 
@@ -62,28 +63,33 @@ Users ──many-to-many──► Roles ──many-to-many──► Permissions
 We will build this project step by step:
 
 ### Phase 1: Foundation
+
 - [x] **Task 1 — Project setup**: FastAPI hello-world in `backend/`, requirements.txt, venv
 - [x] **Task 2 — Database & config**: PostgreSQL via Docker, pydantic-settings, async SQLAlchemy engine, .env
 - [x] **Task 3 — Models**: User, Role, Permission, RefreshToken, Article + join tables
 - [x] **Task 4 — Alembic migrations**: Async Alembic, initial migration, seed script for roles/permissions
 
 ### Phase 2: Authentication
+
 - [x] **Task 5 — Registration**: `POST /auth/register` — create user, hash password (Argon2id), assign viewer role, return tokens (auto-login)
 - [x] **Task 6 — Login**: `POST /auth/login` — verify credentials, return access + refresh tokens
-- [ ] **Task 7 — Token refresh**: `POST /auth/refresh` — issue new access token using refresh token
-- [ ] **Task 8 — Current user**: `GET /users/me` — return user profile with roles and permissions
+- [x] **Task 7 — Token refresh**: `POST /auth/refresh` — issue new access token using refresh token
+- [x] **Task 8 — Current user**: `GET /users/me` — return user profile with roles and permissions
 
 ### Phase 3: Authorization
+
 - [ ] **Task 9 — Auth dependencies**: Build `get_current_user`, `require_permission()`, `require_role()` dependencies
 - [ ] **Task 10 — Articles CRUD**: Protected endpoints with per-action permission checks
 - [ ] **Task 11 — User management**: Admin-only endpoints to list/update/delete users
 
 ### Phase 4: Hardening
+
 - [ ] **Task 12 — Logout & token revocation**: Revoke refresh tokens on logout
 - [ ] **Task 13 — Error handling**: Consistent error responses for 401/403
 - [ ] **Task 14 — Tests**: Pytest tests for auth flows and permission checks
 
 ### Phase 5: CI/CD
+
 - [ ] **Task 15 — Linting & formatting**: Configure Ruff for linting/formatting, add pre-commit hooks
 - [ ] **Task 16 — CI pipeline**: GitHub Actions workflow — lint, type-check, run tests on every PR
 - [ ] **Task 17 — Docker build**: Multi-stage Dockerfile for the FastAPI app, .dockerignore
@@ -91,6 +97,7 @@ We will build this project step by step:
 - [ ] **Task 19 — CD pipeline**: GitHub Actions workflow — build image, push to registry on merge to main
 
 ### Phase 6: Production Release
+
 - [ ] **Task 20 — Environment configuration**: Separate .env configs for dev/staging/prod, secrets management
 - [ ] **Task 21 — Database migrations in CI**: Run Alembic migrations automatically on deploy
 - [ ] **Task 22 — CORS & security headers**: Configure CORS origins, add security middleware (HSTS, CSP, etc.)
