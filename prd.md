@@ -69,7 +69,7 @@ We will build this project step by step:
 
 ### Phase 2: Authentication
 - [x] **Task 5 — Registration**: `POST /auth/register` — create user, hash password (Argon2id), assign viewer role, return tokens (auto-login)
-- [ ] **Task 6 — Login**: `POST /auth/login` — verify credentials, return access + refresh tokens
+- [x] **Task 6 — Login**: `POST /auth/login` — verify credentials, return access + refresh tokens
 - [ ] **Task 7 — Token refresh**: `POST /auth/refresh` — issue new access token using refresh token
 - [ ] **Task 8 — Current user**: `GET /users/me` — return user profile with roles and permissions
 

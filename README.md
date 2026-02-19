@@ -53,3 +53,21 @@ uvicorn app.main:app --reload
 API available at http://localhost:8000
 
 Health check: http://localhost:8000/health
+
+## API Examples
+
+Register a new user:
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"password123"}'
+```
+
+Login:
+
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}'
+```
