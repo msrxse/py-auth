@@ -68,7 +68,7 @@ We will build this project step by step:
 - [x] **Task 4 — Alembic migrations**: Async Alembic, initial migration, seed script for roles/permissions
 
 ### Phase 2: Authentication
-- [ ] **Task 5 — Registration**: `POST /auth/register` — create user, hash password, assign default role
+- [x] **Task 5 — Registration**: `POST /auth/register` — create user, hash password (Argon2id), assign viewer role, return tokens (auto-login)
 - [ ] **Task 6 — Login**: `POST /auth/login` — verify credentials, return access + refresh tokens
 - [ ] **Task 7 — Token refresh**: `POST /auth/refresh` — issue new access token using refresh token
 - [ ] **Task 8 — Current user**: `GET /users/me` — return user profile with roles and permissions
@@ -82,6 +82,22 @@ We will build this project step by step:
 - [ ] **Task 12 — Logout & token revocation**: Revoke refresh tokens on logout
 - [ ] **Task 13 — Error handling**: Consistent error responses for 401/403
 - [ ] **Task 14 — Tests**: Pytest tests for auth flows and permission checks
+
+### Phase 5: CI/CD
+- [ ] **Task 15 — Linting & formatting**: Configure Ruff for linting/formatting, add pre-commit hooks
+- [ ] **Task 16 — CI pipeline**: GitHub Actions workflow — lint, type-check, run tests on every PR
+- [ ] **Task 17 — Docker build**: Multi-stage Dockerfile for the FastAPI app, .dockerignore
+- [ ] **Task 18 — Docker Compose production**: Compose file with app + PostgreSQL + health checks
+- [ ] **Task 19 — CD pipeline**: GitHub Actions workflow — build image, push to registry on merge to main
+
+### Phase 6: Production Release
+- [ ] **Task 20 — Environment configuration**: Separate .env configs for dev/staging/prod, secrets management
+- [ ] **Task 21 — Database migrations in CI**: Run Alembic migrations automatically on deploy
+- [ ] **Task 22 — CORS & security headers**: Configure CORS origins, add security middleware (HSTS, CSP, etc.)
+- [ ] **Task 23 — Rate limiting**: Add rate limiting to auth endpoints (login, register, refresh)
+- [ ] **Task 24 — Logging & monitoring**: Structured JSON logging, health check endpoint (`GET /health`)
+- [ ] **Task 25 — HTTPS & reverse proxy**: Nginx/Traefik config for TLS termination, production ASGI server (uvicorn + gunicorn)
+- [ ] **Task 26 — Production deployment**: Deploy to cloud provider (e.g., AWS ECS, Fly.io, or Railway), verify end-to-end
 
 ---
 
