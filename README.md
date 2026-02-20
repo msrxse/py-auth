@@ -84,16 +84,14 @@ erDiagram
 ## Setup
 
 ```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+poetry install
 ```
 
 ## Migrations
 
 ```bash
 # Apply all migrations
+cd backend
 alembic upgrade head
 
 # Generate a new migration after changing models
@@ -109,8 +107,20 @@ See [backend/alembic/README.md](backend/alembic/README.md) for the full list of 
 
 ```bash
 cd backend
-source venv/bin/activate
 uvicorn app.main:app --reload
+```
+
+## Linting
+
+```bash
+ruff check backend/        # lint
+ruff format backend/       # format
+```
+
+Pre-commit hooks run both automatically on every commit. To set up:
+
+```bash
+pre-commit install
 ```
 
 API available at http://localhost:8000

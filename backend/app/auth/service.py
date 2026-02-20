@@ -1,6 +1,6 @@
 """Business logic for auth operations."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -8,9 +8,22 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import RefreshToken, Role, User
-from app.auth.schemas import AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserResponse
+from app.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
+)
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 
 
 async def register_user(data: RegisterRequest, session: AsyncSession) -> AuthResponse:
@@ -43,19 +56,21 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> AuthRes
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Username or email already exists.",
-        )
+        ) from None
 
     # Generate tokens
     access_token = create_access_token(user.id)
     refresh_token_str = create_refresh_token(user.id)
 
     # Store refresh token in DB
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    session.add(RefreshToken(
-        token=refresh_token_str,
-        user_id=user.id,
-        expires_at=expires_at,
-    ))
+    expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    session.add(
+        RefreshToken(
+            token=refresh_token_str,
+            user_id=user.id,
+            expires_at=expires_at,
+        )
+    )
 
     await session.commit()
 
@@ -101,12 +116,14 @@ async def login_user(data: LoginRequest, session: AsyncSession) -> AuthResponse:
     refresh_token_str = create_refresh_token(user.id)
 
     # Store refresh token in DB
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    session.add(RefreshToken(
-        token=refresh_token_str,
-        user_id=user.id,
-        expires_at=expires_at,
-    ))
+    expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    session.add(
+        RefreshToken(
+            token=refresh_token_str,
+            user_id=user.id,
+            expires_at=expires_at,
+        )
+    )
 
     await session.commit()
 
@@ -139,7 +156,7 @@ async def refresh_user_tokens(data: RefreshRequest, session: AsyncSession) -> To
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token.",
-        )
+        ) from None
 
     # Look up the token in DB
     result = await session.execute(
@@ -161,12 +178,14 @@ async def refresh_user_tokens(data: RefreshRequest, session: AsyncSession) -> To
     new_refresh_token_str = create_refresh_token(user_id)
 
     # Store new refresh token in DB
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    session.add(RefreshToken(
-        token=new_refresh_token_str,
-        user_id=user_id,
-        expires_at=expires_at,
-    ))
+    expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    session.add(
+        RefreshToken(
+            token=new_refresh_token_str,
+            user_id=user_id,
+            expires_at=expires_at,
+        )
+    )
 
     await session.commit()
 

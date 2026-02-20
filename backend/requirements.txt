@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlalchemy[asyncio]
-asyncpg
-pydantic-settings
-alembic
-pwdlib[argon2]
-PyJWT
-email-validator

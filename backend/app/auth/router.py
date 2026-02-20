@@ -3,7 +3,13 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
+from app.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+)
 from app.auth.service import login_user, refresh_user_tokens, register_user
 from app.core.database import get_db
 

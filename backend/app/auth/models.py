@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
@@ -18,11 +18,14 @@ role_permissions = Table(
     "role_permissions",
     Base.metadata,
     Column("role_id", Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "permission_id", Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True
+    ),
 )
 
 
 # --- Models ---
+
 
 class User(Base):
     __tablename__ = "users"
@@ -33,7 +36,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     roles = relationship("Role", secondary=user_roles, back_populates="users", lazy="selectin")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
@@ -47,7 +50,9 @@ class Role(Base):
     description = Column(String(255))
 
     users = relationship("User", secondary=user_roles, back_populates="roles")
-    permissions = relationship("Permission", secondary=role_permissions, back_populates="roles", lazy="selectin")
+    permissions = relationship(
+        "Permission", secondary=role_permissions, back_populates="roles", lazy="selectin"
+    )
 
 
 class Permission(Base):
@@ -69,6 +74,6 @@ class RefreshToken(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     revoked = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     user = relationship("User", back_populates="refresh_tokens")
