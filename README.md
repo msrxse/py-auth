@@ -123,6 +123,14 @@ Pre-commit hooks run both automatically on every commit. To set up:
 pre-commit install
 ```
 
+## CI Pipeline
+
+Test the GitHub Actions workflow locally with [act](https://github.com/nektos/act):
+
+```bash
+make ci
+```
+
 API available at http://localhost:8000
 
 Health check: http://localhost:8000/health

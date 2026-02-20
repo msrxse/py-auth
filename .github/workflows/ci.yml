@@ -9,6 +9,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,10 +22,13 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Run ruff lint
-        run: poetry run ruff check backend/
+        run: poetry run ruff check .
 
   format:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,4 +39,4 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Check formatting
-        run: poetry run ruff format --check backend/
+        run: poetry run ruff format --check .

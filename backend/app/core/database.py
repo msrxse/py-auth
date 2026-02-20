@@ -14,6 +14,7 @@ async_session = async_sessionmaker(engine, expire_on_commit=False)
 class Base(DeclarativeBase):
     pass
 
+
 # Some routes need this
 async def get_db():
     async with async_session() as session:
