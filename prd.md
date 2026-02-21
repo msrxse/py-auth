@@ -92,7 +92,7 @@ We will build this project step by step:
 
 - [x] **Task 15 — Linting & formatting**: Configure Ruff for linting/formatting, add pre-commit hooks
 - [x] **Task 16 — CI pipeline**: GitHub Actions workflow — lint, format check, workflow_dispatch trigger
-- [ ] **Task 17 — Docker build**: Multi-stage Dockerfile for the FastAPI app, .dockerignore
+- [x] **Task 17 — Docker build**: Multi-stage Dockerfile for the FastAPI app, .dockerignore
 - [ ] **Task 18 — Docker Compose production**: Compose file with app + PostgreSQL + health checks
 - [ ] **Task 19 — CD pipeline**: GitHub Actions workflow — build image, push to registry on merge to main
 

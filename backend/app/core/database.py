@@ -15,7 +15,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# Some routes need this
+# Yields session to your routes
 async def get_db():
     async with async_session() as session:
         yield session
