@@ -7,36 +7,98 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      poetry_cache_key: ${{ steps.poetry-cache.outputs.cache-primary-key }}
     defaults:
       run:
         working-directory: backend
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
+
+      - name: Cache Poetry + venv
+        id: poetry-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            backend/.venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('backend/poetry.lock') }}
+
       - name: Install dependencies
-        run: poetry install
-      - name: Run ruff lint
-        run: poetry run ruff check .
+        run: poetry install --no-interaction --no-root
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: setup
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reuse Poetry + venv cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            backend/.venv
+          key: ${{ needs.setup.outputs.poetry_cache_key }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+        # ACT doesnt read cache so actually needs to install deps
+      - name: Install deps (required for `act`, optional for GitHub)
+      # This uses the poetry command to install dependencies into your virtualenv.
+        run: poetry install --no-interaction --no-root
+
+      - name: Ruff lint
+        run: poetry run ruff check --output-format=github .
 
   format:
     runs-on: ubuntu-latest
+    needs: setup
     defaults:
       run:
         working-directory: backend
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Reuse Poetry + venv cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            backend/.venv
+          key: ${{ needs.setup.outputs.poetry_cache_key }}
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
-      - name: Install dependencies
-        run: poetry install
+
+        # ACT doesnt read cache so actually needs to install deps
+      - name: Install deps (required for `act`, optional for GitHub)
+        # This uses the poetry command to install dependencies into your virtualenv.
+        run: poetry install --no-interaction --no-root
+
       - name: Check formatting
         run: poetry run ruff format --check .
