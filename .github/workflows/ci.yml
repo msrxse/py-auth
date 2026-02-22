@@ -10,7 +10,12 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      poetry_cache_key: ${{ steps.poetry-cache.outputs.cache-primary-key }}
+      # If the cache is missing (first run or invalidated), the
+      # cache step exposes NO key, producing an empty output → downstream jobs fail with:
+      # "Error: Input required and not supplied: key".
+      # So we specifically create a key as send it to putput in this job
+      poetry_cache_key: ${{ steps.cache-key.outputs.key }}
+
     defaults:
       run:
         working-directory: backend
@@ -25,17 +30,24 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Cache Poetry + venv
+      - name: Compute deterministic cache key
+        id: cache-key
+        # We compute the key once here and reuse it across all jobs.
+        # It's based on OS + hash of poetry.lock → stable and reproducible.
+        run: echo "key=${{ runner.os }}-poetry-${{ hashFiles('backend/poetry.lock') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Poetry + virtualenv
         id: poetry-cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache/pypoetry
             backend/.venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('backend/poetry.lock') }}
+          key: ${{ steps.cache-key.outputs.key }}
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
+
 
   lint:
     runs-on: ubuntu-latest
@@ -51,7 +63,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Reuse Poetry + venv cache
+      - name: Restore Poetry + venv cache
         uses: actions/cache@v3
         with:
           path: |
@@ -62,13 +74,13 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-        # ACT doesnt read cache so actually needs to install deps
-      - name: Install deps (required for `act`, optional for GitHub)
-      # This uses the poetry command to install dependencies into your virtualenv.
+      # Required when running locally with `act` (because act does not support cache restore)
+      - name: Install deps (needed only for act)
         run: poetry install --no-interaction --no-root
 
       - name: Ruff lint
         run: poetry run ruff check --output-format=github .
+
 
   format:
     runs-on: ubuntu-latest
@@ -84,7 +96,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Reuse Poetry + venv cache
+      - name: Restore Poetry + venv cache
         uses: actions/cache@v3
         with:
           path: |
@@ -95,9 +107,8 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-        # ACT doesnt read cache so actually needs to install deps
-      - name: Install deps (required for `act`, optional for GitHub)
-        # This uses the poetry command to install dependencies into your virtualenv.
+      # Required when running locally with `act`
+      - name: Install deps (needed only for act)
         run: poetry install --no-interaction --no-root
 
       - name: Check formatting
