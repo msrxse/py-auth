@@ -1,65 +1,128 @@
 # Authentication
 
-## Sessions (traditional approach)
+## Traditional sessions
 
-When you log in, the server creates a **session** — a record stored server-side (in memory, Redis, or a database) that says "this user is authenticated." The server sends back a **session ID** as a cookie.
+- When you log in, the server creates a session record (in memory/Redis/DB) that says who you are.
+- The server puts a session ID cookie in the HTTP response header.
 
 ```
-1. Client sends credentials
-2. Server creates session record: { id: "abc123", user_id: 42, expires: ... }
-3. Server sends cookie: session_id=abc123
-4. Client sends cookie on every request
-5. Server looks up "abc123" in its session store → finds user_id 42 → authenticated
+Set-Cookie: session_id=abc123; HttpOnly; Secure; Path=/
 ```
 
-**The server is the source of truth.** Every request requires a database/cache lookup to validate the session. If you want to revoke access, you delete the session record — instant.
+- Then on every request, the browser sends that cookie back.
 
-**Downsides:** Server must store state for every active user. Doesn't scale easily across multiple servers (they all need access to the same session store). Cookies don't work well for mobile apps or third-party APIs.
+```
+Cookie: session_id=abc123 # The cookie doesn’t store user info.
+```
+
+- The server looks up the session ID in the cookie, looks up the session record, and identifies the user.
+
+```
+# example of a session record
+{
+  "id": "abc123",
+  "user_id": 42,
+  "expires": "2026-02-22T12:00:00Z"
+}
+```
+
+Pros
+
+- Easy to revoke or invalidate sessions instantly.
+- Server fully controls authentication state.
+
+Cons
+
+- The server must store state for every user.
+- Multiple servers need a shared session store, which adds complexity.
+- Cookies don’t fit well for mobile apps or third-party clients.
+
+### How caching fits into session-based auth
+
+1. In-memory cache (fastest, but only single server)
+
+Example: server keeps sessions in RAM.
+
+- super fast
+- but doesn’t work if you have multiple servers (each would have different RAM)
+
+2. Distributed cache (most common)
+
+Example: Redis.
+
+- all servers share the same session store
+- lookup is very fast (microseconds–milliseconds)
+- scales across many servers
+- can evict expired sessions automatically
+
+This is what most scalable systems use.
+
+3. Database (slowest, last resort)
+   Systems can store sessions in a database, but it’s slow compared to Redis, so it’s usually avoided for each-request lookups.
 
 ## JWT tokens (stateless approach)
 
-A JWT (JSON Web Token) is a **self-contained** token. Instead of storing session data on the server, the server encodes the data into the token itself and **signs** it cryptographically.
+A JWT (JSON Web Token) is a small, signed package of data that the server gives the client after login.
+It contains user info inside the token itself — no session lookup required.
 
-A JWT has 3 parts (base64-encoded, separated by dots):
+With a JWT, the server authenticates the user by simply:
+
+1. Receiving the token
+2. Verifying the signature using its secret/public key
+3. Reading the claims inside (user_id, roles, expiry, etc.)
+
+### How JWT authentication works
+
+1. Client sends credentials
 
 ```
-eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MiIsImV4cCI6MTcwOH0.signature
-|---- header ----|  |--------- payload ---------|  |-- sig --|
+POST /login
 ```
 
-- **Header**: algorithm used (HS256, RS256, etc.)
-- **Payload**: the claims — `sub` (user ID), `exp` (expiry), and any other data
-- **Signature**: `HMAC(header + payload, SECRET_KEY)` — proves the token wasn't tampered with
+2. Server creates a JWT
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
+It encodes:
+• user ID
+• expiry
+• maybe permissions/roles
 
-    C->>S: POST /auth/login {username, password}
-    S->>S: Verify password (Argon2id)
-    S->>S: Sign JWT: {sub: user_id, exp: 30min}
-    S-->>C: {access_token, refresh_token}
-
-    C->>S: GET /api/resource (Authorization: Bearer <access_token>)
-    S->>S: Verify JWT signature + expiry
-    S-->>C: 200 OK (resource data)
-
-    Note over C,S: Access token expires after 30 min
-
-    C->>S: POST /auth/refresh {refresh_token}
-    S->>S: Check DB: not revoked? not expired?
-    S->>S: Revoke old, issue new pair
-    S-->>C: {new_access_token, new_refresh_token}
-
-    C->>S: POST /auth/logout {refresh_token}
-    S->>S: Mark refresh token as revoked in DB
-    S-->>C: 200 OK
+```
+{
+  "user_id": 42,
+  "role": "admin",
+  "exp": 1730000000
+}
 ```
 
-**No database lookup needed for access tokens.** The server just verifies the signature mathematically. This is why it's called "stateless."
+The server signs it with a secret key so the client can’t modify it.
 
-**Downsides:** You **can't revoke** a JWT before it expires — the server has no record of it. If a token is stolen, it's valid until expiry. This is why access tokens are short-lived (30 min in our case).
+3. Server gives JWT to the client
+
+Usually in the response body or a header.
+(Optionally in an HttpOnly cookie.)
+
+4. Client sends the JWT on every request
+
+Typically in:
+
+```
+Authorization: Bearer <token>
+```
+
+5. Server verifies the JWT signature
+   • If valid → trust the data inside
+   • No DB lookup needed
+   • If expired or invalid → deny access
+
+Advantages
+
+- Stateless → server doesn’t store sessions - no cache, no lookup
+- Scales easily across many servers
+- Works great for:
+- mobile apps
+- SPAs (React/Vue)
+- third-party APIs
+- microservices
 
 ## Two-token system: Access + Refresh
 
@@ -84,14 +147,6 @@ The flow:
 5. Logout → server marks refresh_token as revoked in DB
 ```
 
-## JWT payload (minimal by design)
-
-```json
-{ "sub": "user_id", "exp": 1234567890 }
-```
-
-Identity only. No permissions in the token — they live in the database so they can be changed/revoked instantly without reissuing tokens.
-
 ## Library choices
 
 - **PyJWT** over python-jose — python-jose is abandoned (~3 years unmaintained). FastAPI docs switched to PyJWT in 2024.
@@ -106,20 +161,3 @@ POST /auth/refresh   → verify refresh token → return new access_token
 GET  /users/me       → decode JWT → return user profile + roles + permissions
 POST /auth/logout    → revoke refresh token in DB
 ```
-
-## How this project balances stateless vs stateful
-
-```
-JWT contains:  { sub: user_id, exp }          ← identity only, verified by signature
-Database holds: RefreshTokens                  ← revocable, source of truth for sessions
-Database holds: Users → Roles → Permissions    ← source of truth for authorization
-```
-
-Access tokens are verified mathematically (no DB hit). Permissions are checked by querying the DB on each request (so they can be changed instantly). Refresh tokens are in the DB so they can be revoked on logout.
-
-## Frontend integration
-
-- Store access token in memory, refresh token in httpOnly cookie
-- On 401: silently call `/auth/refresh` for a new access token
-- Use permissions from `/users/me` for UI rendering (show/hide elements)
-- Never trust frontend permission checks — backend always re-validates
